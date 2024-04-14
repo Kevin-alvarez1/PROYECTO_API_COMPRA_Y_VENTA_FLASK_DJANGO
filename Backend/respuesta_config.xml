@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<respuesta>
+    <clientes>
+        <creados></creados>
+        <actualizados></actualizados>
+    </clientes>
+    <bancos>
+        <creados></creados>
+        <actualizados></actualizados>
+    </bancos>
+</respuesta>
