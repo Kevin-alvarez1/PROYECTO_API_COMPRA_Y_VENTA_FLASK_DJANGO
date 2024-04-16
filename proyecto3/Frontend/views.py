@@ -33,6 +33,36 @@ def upload_to_flask(request):
         # Si la solicitud no es POST, simplemente renderiza una página con el formulario de carga de archivos
         return render(request, 'Cargar_Config.html')
 
+def upload_transaccion_to_flask(request):
+    if request.method == 'POST':
+        # Verificar si se envió un archivo
+        if 'archivo' not in request.FILES:
+            return HttpResponse('No se envió ningún archivo', status=400)
+
+        archivo = request.FILES['archivo']
+
+        # Verificar si se seleccionó un archivo
+        if archivo.name == '':
+            return HttpResponse('No se seleccionó ningún archivo', status=400)
+
+        # Construir la URL del servidor Flask
+        url_flask = 'http://localhost:4700/uploadTransaccion'
+
+        # Enviar el archivo al servidor Flask
+        files = {'archivo': archivo}
+        response = requests.post(url_flask, files=files)
+
+        # Verificar la respuesta del servidor Flask
+        if response.status_code == 200:
+            return HttpResponse('Archivo enviado correctamente a Flask', status=200)
+
+        else:
+            return HttpResponse('Error al enviar el archivo a Flask', status=500)
+    
+    else:
+        # Si la solicitud no es POST, simplemente renderiza una página con el formulario de carga de archivos
+        return render(request, 'Cargar_Transac.html')
+
 @csrf_exempt
 def reset_to_flask(request):
     if request.method == 'POST':
@@ -44,7 +74,7 @@ def reset_to_flask(request):
         # Verificar la respuesta del servidor Flask
         if response.status_code == 200:
             return HttpResponse('Base de datos Reseteada correctamente', status=200)
-
+            
         else:
             return HttpResponse('Error resetear la base de datos', status=500)
 

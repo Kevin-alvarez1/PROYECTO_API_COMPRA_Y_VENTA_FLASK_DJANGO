@@ -28,7 +28,6 @@
     <div class="row justify-content-center">
         <div class="col-md-6">
             <form action="/upload" method="post" enctype="multipart/form-data">
-                <!-- Asegúrate de incluir el token CSRF si estás utilizando Django -->
                 {% csrf_token %}
                 <input type="file" name="archivo">
                 <button type="submit" class="btn btn-primary btn-lg btn-block">Cargar Configuración</button>

@@ -8,7 +8,12 @@
             <fecha> 02/04/2022 </fecha>
             <valor> 120 </valor>
         </factura> 
-
+        <factura>
+            <numeroFactura> 2001 </numeroFactura>
+            <NITcliente> 9202783-4 </NITcliente>
+            <fecha> 03/04/2022 </fecha>
+            <valor> 180 </valor>
+        </factura> 
         <factura>
             <numeroFactura> 201 </numeroFactura>
             <NITcliente> 1102783-1 </NITcliente>
