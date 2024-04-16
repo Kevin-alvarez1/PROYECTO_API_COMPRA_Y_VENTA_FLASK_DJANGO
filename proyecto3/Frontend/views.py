@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 import requests
+from django.views.decorators.csrf import csrf_exempt
 
 def upload_to_flask(request):
     if request.method == 'POST':
@@ -32,6 +33,25 @@ def upload_to_flask(request):
         # Si la solicitud no es POST, simplemente renderiza una página con el formulario de carga de archivos
         return render(request, 'Cargar_Config.html')
 
+@csrf_exempt
+def reset_to_flask(request):
+    if request.method == 'POST':
+        # Construir la URL del servidor Flask
+        url_flask = 'http://localhost:4700/reset'
+
+        response = requests.post(url_flask)
+
+        # Verificar la respuesta del servidor Flask
+        if response.status_code == 200:
+            return HttpResponse('Base de datos Reseteada correctamente', status=200)
+
+        else:
+            return HttpResponse('Error resetear la base de datos', status=500)
+
+    else:
+        # Si la solicitud no es POST, simplemente renderiza una página con el formulario de carga de archivos
+        return render(request, 'Resetear_datos.html')
+    
 # Create your views here.
 def registrarCliente(request):
     return render(request, 'registrarCliente.html')

@@ -12,5 +12,6 @@ urlpatterns=[
     path('Info_Estudiante', views.Info_Estudiante, name='Info_Estudiante'),
     path('Info_pagina', views.Info_pagina, name='Info_pagina'),
     path('upload', views.upload_to_flask, name='upload_to_flask'),
-
+    path('reset', views.reset_to_flask, name='reset_to_flask'),
+    
 ]

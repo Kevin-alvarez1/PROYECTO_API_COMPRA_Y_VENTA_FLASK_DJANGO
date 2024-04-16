@@ -16,23 +16,26 @@ class RespuestaConfig:
 def guardar_respuesta_config(respuesta):
     root = ET.Element('respuesta')
 
-    clientes_element = ET.SubElement(root, 'clientes')
-    if respuesta.clientes_creados is not None:
-        ET.SubElement(clientes_element, 'creados').text = str(respuesta.clientes_creados)
-    if respuesta.clientes_actualizados is not None:
-        ET.SubElement(clientes_element, 'actualizados').text = str(respuesta.clientes_actualizados)
+    if respuesta.clientes_creados is not None or respuesta.clientes_actualizados is not None:
+        clientes_element = ET.SubElement(root, 'clientes')
+        if respuesta.clientes_creados is not None:
+            ET.SubElement(clientes_element, 'creados').text = str(respuesta.clientes_creados)
+        if respuesta.clientes_actualizados is not None:
+            ET.SubElement(clientes_element, 'actualizados').text = str(respuesta.clientes_actualizados)
 
-    bancos_element = ET.SubElement(root, 'bancos')
-    if respuesta.bancos_creados is not None:
-        ET.SubElement(bancos_element, 'creados').text = str(respuesta.bancos_creados)
-    if respuesta.bancos_actualizados is not None:
-        ET.SubElement(bancos_element, 'actualizados').text = str(respuesta.bancos_actualizados)
+    if respuesta.bancos_creados is not None or respuesta.bancos_actualizados is not None:
+        bancos_element = ET.SubElement(root, 'bancos')
+        if respuesta.bancos_creados is not None:
+            ET.SubElement(bancos_element, 'creados').text = str(respuesta.bancos_creados)
+        if respuesta.bancos_actualizados is not None:
+            ET.SubElement(bancos_element, 'actualizados').text = str(respuesta.bancos_actualizados)
 
     xml_str = xml.dom.minidom.parseString(ET.tostring(root)).toprettyxml(indent="    ")
     formatted_xml = remove_whitespace(xml_str)
 
     with open('respuesta_config.xml', 'w') as file:
         file.write(formatted_xml)
+
 
 def remove_whitespace(xml_string):
     lines = xml_string.split("\n")
@@ -90,9 +93,8 @@ def actualizar_base_datos(archivo_guardado, nuevo_contenido):
             if any(cliente.Nit_Cliente == nit for cliente in clientes):
                 for cliente in clientes:
                     if cliente.Nit_Cliente == nit:
-                        if cliente.Nombre_Cliente != cliente_xml.find('nombre').text.strip():
-                            cliente.Nombre_Cliente = cliente_xml.find('nombre').text.strip()
-                            clientes_actualizados += 1
+                        cliente.Nombre_Cliente = cliente_xml.find('nombre').text.strip()
+                        clientes_actualizados += 1
                         break
             else:
                 nombre = cliente_xml.find('nombre').text.strip()
@@ -106,9 +108,8 @@ def actualizar_base_datos(archivo_guardado, nuevo_contenido):
         if any(banco.Codigo_Banco == codigo for banco in bancos):
             for banco in bancos:
                 if banco.Codigo_Banco == codigo:
-                    if banco.Nombre_Banco != banco_xml.find('nombre').text.strip():
-                        banco.Nombre_Banco = banco_xml.find('nombre').text.strip()
-                        bancos_actualizados += 1
+                    banco.Nombre_Banco = banco_xml.find('nombre').text.strip()
+                    bancos_actualizados += 1
                     break
         else:
             nombre = banco_xml.find('nombre').text.strip()
@@ -156,6 +157,20 @@ def upload_file():
     actualizar_base_datos(archivo_guardado, nuevo_contenido)
 
     return 'Archivo recibido y contenido guardado en Guardado_Config.xml', 200
+
+@app.route('/reset', methods=['POST'])
+def reset_data():
+    nombre_archivo = 'Guardado_Config.xml'
+    nombre_archivo2 = 'respuesta_config.xml'
+    archivo_guardado = os.path.join(os.getcwd(), nombre_archivo)
+
+    if os.path.exists(archivo_guardado):
+        os.remove(archivo_guardado)
+    archivo_guardado2 = os.path.join(os.getcwd(), nombre_archivo2)
+
+    if os.path.exists(archivo_guardado2):
+        os.remove(archivo_guardado2)
+    return 'Datos reiniciados', 200
 
 if __name__ == '__main__':
     app.run(port=4700, debug=True)
