@@ -202,9 +202,7 @@ def extraer_fechas(texto):
     fechas_encontradas = re.findall(patron_fecha, texto)
     return fechas_encontradas
 
-def guardar_respuesta_transaccion(respuesta_transaccion):
-    # Aquí agregamos el objeto a la base de datos o hacemos lo que sea necesario con él
-    pass
+
 
 def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_contenido_transaccion):
     facturas = []
