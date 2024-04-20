@@ -6,6 +6,30 @@ import re
 
 app = Flask(__name__)
 
+class Cliente:
+    def __init__(self, Nit_Cliente, Nombre_Cliente):
+        self.Nit_Cliente = Nit_Cliente
+        self.Nombre_Cliente = Nombre_Cliente
+
+class Banco:
+    def __init__(self, Nombre_Banco, Codigo_Banco):
+        self.Nombre_Banco = Nombre_Banco
+        self.Codigo_Banco = Codigo_Banco
+
+class Factura:
+    def __init__(self, Numero_Factura, Nit_CLiente,Fecha_Factura,Valor_Factura):
+        self.Numero_Factura = Numero_Factura
+        self.Nit_Cliente = Nit_CLiente
+        self.Fecha_Factura = Fecha_Factura
+        self.Valor_Factura = Valor_Factura
+
+class Pago:
+    def __init__(self, Codigo_Banco, Fecha_Pago, Nit_Cliente, Valor_Pago):
+        self.Codigo_Banco = Codigo_Banco
+        self.Fecha_Pago = Fecha_Pago
+        self.Nit_Cliente = Nit_Cliente
+        self.Valor_Pago = Valor_Pago
+
 class RespuestaConfig:
     def __init__(self, clientes_creados, bancos_creados, clientes_actualizados, bancos_actualizados):
         self.clientes_creados = clientes_creados
@@ -78,29 +102,6 @@ def remove_whitespace(xml_string):
     non_empty_lines = [line for line in lines if line.strip() != ""]
     return "\n".join(non_empty_lines)
 
-class Cliente:
-    def __init__(self, Nit_Cliente, Nombre_Cliente):
-        self.Nit_Cliente = Nit_Cliente
-        self.Nombre_Cliente = Nombre_Cliente
-
-class Banco:
-    def __init__(self, Nombre_Banco, Codigo_Banco):
-        self.Nombre_Banco = Nombre_Banco
-        self.Codigo_Banco = Codigo_Banco
-
-class Factura:
-    def __init__(self, Numero_Factura, Nit_CLiente,Fecha_Factura,Valor_Factura):
-        self.Numero_Factura = Numero_Factura
-        self.Nit_Cliente = Nit_CLiente
-        self.Fecha_Factura = Fecha_Factura
-        self.Valor_Factura = Valor_Factura
-
-class Pago:
-    def __init__(self, Codigo_Banco, Fecha_Pago, Nit_Cliente, Valor_Pago):
-        self.Codigo_Banco = Codigo_Banco
-        self.Fecha_Pago = Fecha_Pago
-        self.Nit_Cliente = Nit_Cliente
-        self.Valor_Pago = Valor_Pago
 
 def validar_nit(nit):
     # Patrón para NIT #######-#
@@ -112,9 +113,10 @@ def validar_nit(nit):
     else:
         return False
 
+clientes = []
+bancos = []
+
 def actualizar_base_datos(archivo_guardado, nuevo_contenido):
-    clientes = []
-    bancos = []
 
     if os.path.exists(archivo_guardado):
         tree = ET.parse(archivo_guardado)
@@ -193,6 +195,17 @@ def actualizar_base_datos(archivo_guardado, nuevo_contenido):
 def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_contenido_transaccion):
     facturas = []
     pagos = []
+    
+    # Creamos listas auxiliares para verificar duplicados dentro del mismo archivo
+    facturas_nuevas = []
+    pagos_nuevos = []
+
+    facturas_creadas = 0
+    facturas_duplicadas = 0
+    facturas_error = 0
+    pagos_creados = 0
+    pagos_duplicados = 0
+    pagos_error = 0
 
     if os.path.exists(archivo_guardado_transaccion):
         tree = ET.parse(archivo_guardado_transaccion)
@@ -204,7 +217,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             nit_cliente = factura_xml.find('NITcliente').text.strip()
             fecha_factura = factura_xml.find('fecha').text.strip()
             valor_factura = factura_xml.find('valor').text.strip()
-            facturas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
+            
 
         # Obtener todos los pagos del archivo XML
         for pago_xml in root.findall('.//pago'):
@@ -212,16 +225,9 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             fecha_pago = pago_xml.find('fecha').text.strip()
             nit_cliente = pago_xml.find('NITcliente').text.strip()
             valor_pago = pago_xml.find('valor').text.strip()
-            pagos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
+
 
     nuevo_elemento = ET.fromstring(nuevo_contenido_transaccion)
-
-    facturas_creadas = 0
-    facturas_duplicadas = 0
-    facturas_error = 0
-    pagos_creados = 0
-    pagos_duplicados = 0
-    pagos_error = 0
 
     for factura_xml in nuevo_elemento.findall('.//factura'):
         numero_factura = factura_xml.find('numeroFactura').text.strip()
@@ -229,13 +235,22 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         fecha_factura = factura_xml.find('fecha').text.strip()
         valor_factura = factura_xml.find('valor').text.strip()
 
-        # Verificar si la factura ya existe
-        if any(factura.Numero_Factura == numero_factura for factura in facturas):
-            facturas_duplicadas += 1
+        # Verificar si algún campo de la factura está vacío
+        if not numero_factura or not nit_cliente or not fecha_factura or not valor_factura:
+            facturas_error += 1
         else:
-            # Crear nueva factura
-            facturas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
-            facturas_creadas += 1
+            # Verificar si la factura ya existe dentro del mismo archivo
+            if any(factura.Numero_Factura == numero_factura for factura in facturas_nuevas):
+                facturas_duplicadas += 1
+            elif any(Cliente.Nit_Cliente == nit_cliente for Cliente in clientes):
+                # El NIT del cliente existe en la lista de clientes
+                facturas_nuevas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
+                facturas_creadas += 1
+                facturas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
+            else:
+                # El NIT del cliente no existe en la lista de clientes
+                facturas_error += 1
+
 
     for pago_xml in nuevo_elemento.findall('.//pago'):
         codigo_banco = pago_xml.find('codigoBanco').text.strip()
@@ -243,20 +258,45 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         nit_cliente = pago_xml.find('NITcliente').text.strip()
         valor_pago = pago_xml.find('valor').text.strip()
 
-        # Verificar si el pago ya existe
-        if any(pago.Codigo_Banco == codigo_banco and pago.Fecha_Pago == fecha_pago for pago in pagos):
-            pagos_duplicados += 1
+        # Verificar si algún campo del pago está vacío
+        if not codigo_banco or not fecha_pago or not nit_cliente or not valor_pago:
+            pagos_error += 1
         else:
-            # Crear nuevo pago
-            pagos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
-            pagos_creados += 1
+            # Verificar si el pago ya existe dentro del mismo archivo
+            if any(pago.Codigo_Banco == codigo_banco and 
+                    pago.Fecha_Pago == fecha_pago and 
+                    pago.Nit_Cliente == nit_cliente and 
+                    pago.Valor_Pago == valor_pago 
+                    for pago in pagos_nuevos):
+                pagos_duplicados += 1
+            else:
+                # Verificar si el pago ya existe en la base de datos
+                if any(pago.Codigo_Banco == codigo_banco and 
+                        pago.Fecha_Pago == fecha_pago and 
+                        pago.Nit_Cliente == nit_cliente and 
+                        pago.Valor_Pago == valor_pago 
+                        for pago in pagos):
+                    pagos_duplicados += 1
+                else:
+                    # Verificar si el código del banco existe en la lista de bancos
+                    if any(banco.Codigo_Banco == codigo_banco for banco in bancos):
+                        # Crear nuevo pago
+                        pagos_nuevos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
+                        pagos_creados += 1
 
+                        # Agregar pago creado a la lista de pagos
+                        pagos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
+                    else:
+                        # El código del banco no existe en la lista de bancos
+                        pagos_error += 1
+
+                        
     guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error))
 
     root = ET.Element('transacciones')
 
     facturas_element = ET.SubElement(root, 'facturas')
-    for factura in facturas:
+    for factura in facturas_nuevas:
         factura_element = ET.SubElement(facturas_element, 'factura')
         ET.SubElement(factura_element, 'numeroFactura').text = factura.Numero_Factura
         ET.SubElement(factura_element, 'NITcliente').text = factura.Nit_Cliente
@@ -264,7 +304,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         ET.SubElement(factura_element, 'valor').text = factura.Valor_Factura
 
     pagos_element = ET.SubElement(root, 'pagos')
-    for pago in pagos:
+    for pago in pagos_nuevos:
         pago_element = ET.SubElement(pagos_element, 'pago')
         ET.SubElement(pago_element, 'codigoBanco').text = pago.Codigo_Banco
         ET.SubElement(pago_element, 'fecha').text = pago.Fecha_Pago
@@ -278,6 +318,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         file.write(formatted_xml)
 
     return xml_str
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
