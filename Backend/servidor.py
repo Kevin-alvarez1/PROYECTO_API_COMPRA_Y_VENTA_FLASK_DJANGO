@@ -38,13 +38,14 @@ class RespuestaConfig:
         self.bancos_actualizados = bancos_actualizados
 
 class RespuestaTranascion:
-    def __init__(self, facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error):
+    def __init__(self, facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error, fecha_extraida):
         self.facturas_creadas = facturas_creadas
         self.facturas_duplicadas = facturas_duplicadas
         self.facturas_error = facturas_error
         self.pagos_creados = pagos_creados
         self.pagos_duplicados = pagos_duplicados
         self.pagos_error = pagos_error
+        self.fecha_extraida = fecha_extraida
 
 def guardar_respuesta_transaccion(respuesta):
     root = ET.Element('respuesta')
@@ -192,6 +193,19 @@ def actualizar_base_datos(archivo_guardado, nuevo_contenido):
 
     return xml_str
 
+
+def extraer_fechas(texto):
+    # Patron para fechas en formato dd/mm/yyyy
+    patron_fecha = r'\b\d{1,2}/\d{1,2}/\d{4}\b'
+
+    # Buscar las coincidencias del patrón en el texto
+    fechas_encontradas = re.findall(patron_fecha, texto)
+    return fechas_encontradas
+
+def guardar_respuesta_transaccion(respuesta_transaccion):
+    # Aquí agregamos el objeto a la base de datos o hacemos lo que sea necesario con él
+    pass
+
 def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_contenido_transaccion):
     facturas = []
     pagos = []
@@ -218,6 +232,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             fecha_factura = factura_xml.find('fecha').text.strip()
             valor_factura = factura_xml.find('valor').text.strip()
             
+            facturas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
 
         # Obtener todos los pagos del archivo XML
         for pago_xml in root.findall('.//pago'):
@@ -226,14 +241,25 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             nit_cliente = pago_xml.find('NITcliente').text.strip()
             valor_pago = pago_xml.find('valor').text.strip()
 
+            pagos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
 
     nuevo_elemento = ET.fromstring(nuevo_contenido_transaccion)
 
     for factura_xml in nuevo_elemento.findall('.//factura'):
         numero_factura = factura_xml.find('numeroFactura').text.strip()
         nit_cliente = factura_xml.find('NITcliente').text.strip()
-        fecha_factura = factura_xml.find('fecha').text.strip()
+        fecha_factura_texto = factura_xml.find('fecha').text.strip()
         valor_factura = factura_xml.find('valor').text.strip()
+
+        # Extraer fechas del texto de la fecha de la factura
+        fechas_encontradas = extraer_fechas(fecha_factura_texto)
+
+        # Tomar la primera fecha encontrada (asumiendo que solo hay una fecha)
+        if fechas_encontradas:
+            fecha_factura = fechas_encontradas[0]
+        else:
+            # Si no se encuentra ninguna fecha, asignar una cadena vacía
+            fecha_factura = ''
 
         # Verificar si algún campo de la factura está vacío
         if not numero_factura or not nit_cliente or not fecha_factura or not valor_factura:
@@ -242,21 +268,27 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             # Verificar si la factura ya existe dentro del mismo archivo
             if any(factura.Numero_Factura == numero_factura for factura in facturas_nuevas):
                 facturas_duplicadas += 1
-            elif any(Cliente.Nit_Cliente == nit_cliente for Cliente in clientes):
-                # El NIT del cliente existe en la lista de clientes
+            else:
+                # El NIT del cliente no existe en la lista de clientes
                 facturas_nuevas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
                 facturas_creadas += 1
                 facturas.append(Factura(numero_factura, nit_cliente, fecha_factura, valor_factura))
-            else:
-                # El NIT del cliente no existe en la lista de clientes
-                facturas_error += 1
-
 
     for pago_xml in nuevo_elemento.findall('.//pago'):
         codigo_banco = pago_xml.find('codigoBanco').text.strip()
-        fecha_pago = pago_xml.find('fecha').text.strip()
+        fecha_pago_texto = pago_xml.find('fecha').text.strip()
         nit_cliente = pago_xml.find('NITcliente').text.strip()
         valor_pago = pago_xml.find('valor').text.strip()
+
+        # Extraer fechas del texto de la fecha de pago
+        fechas_encontradas = extraer_fechas(fecha_pago_texto)
+
+        # Tomar la primera fecha encontrada (asumiendo que solo hay una fecha)
+        if fechas_encontradas:
+            fecha_pago = fechas_encontradas[0]
+        else:
+            # Si no se encuentra ninguna fecha, asignar una cadena vacía
+            fecha_pago = ''
 
         # Verificar si algún campo del pago está vacío
         if not codigo_banco or not fecha_pago or not nit_cliente or not valor_pago:
@@ -290,8 +322,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                         # El código del banco no existe en la lista de bancos
                         pagos_error += 1
 
-                        
-    guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error))
+    guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error, fecha_pago))
 
     root = ET.Element('transacciones')
 
