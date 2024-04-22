@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import requests
 from django.views.decorators.csrf import csrf_exempt
-
+from xml.etree import ElementTree as ET
 def upload_to_flask(request):
     if request.method == 'POST':
         # Verificar si se envió un archivo
@@ -87,6 +87,8 @@ def registrarCliente(request):
     return render(request, 'registrarCliente.html')
 def Consultar_cuenta(request):
     return render(request, 'Consultar_cuenta.html')
+def Consultar_Ingresos(request):
+    return render(request, 'Consultar_Ingresos.html')
 def Resetear_datos(request):
     return render(request, 'Resetear_datos.html')
 def Cargar_Config(request):
@@ -101,3 +103,40 @@ def Info_Estudiante(request):
     return render(request, 'Info_Estudiante.html')
 def Info_pagina(request):
     return render(request, 'Info_pagina.html')
+def tabla_clientes(request):
+    # Leer el archivo XML de clientes
+    tree_clientes = ET.parse('C:/Users/Player/Desktop/Carpeta GitHub Poryecto 3 IPC2/Guardado_Config.xml')
+    root_clientes = tree_clientes.getroot()
+
+    # Procesar los datos del archivo XML de clientes
+    clientes = []
+    for cliente_xml in root_clientes.findall('.//cliente'):
+        nit = cliente_xml.find('NIT').text.strip()
+        nombre = cliente_xml.find('nombre').text.strip()
+        SaldoActual = cliente_xml.find('SaldoActual').text.strip()
+        clientes.append({'nit': nit, 'nombre': nombre, 'SaldoActual': SaldoActual})
+
+    # Leer el archivo XML de transacciones
+    tree_transacciones = ET.parse('C:/Users/Player/Desktop/Carpeta GitHub Poryecto 3 IPC2/Guardado_Transaccion.xml')
+    root_transacciones = tree_transacciones.getroot()
+
+    # Procesar los datos del archivo XML de transacciones
+    facturas = []
+    for factura_xml in root_transacciones.findall('.//factura'):
+        fecha = factura_xml.find('fecha').text.strip()
+        valor = factura_xml.find('valor').text.strip()
+        facturas.append({'fecha': fecha, 'valor': valor})
+
+    pagos = []
+    for pago_xml in root_transacciones.findall('.//pago'):
+        valor = pago_xml.find('valor').text.strip()
+        pagos.append({'valor': valor})
+
+    # Enumerar las facturas y los pagos para sincronizarlos
+    enumeradas_facturas = list(enumerate(facturas))
+
+
+    return render(request, 'Tabla_Clientes.html', {'clientes': clientes, 'enumeradas_facturas': enumeradas_facturas, 'pagos': pagos})
+
+def Seleccionar_Cliente(request):
+    return render(request, 'Consultar_Ingresos.html')

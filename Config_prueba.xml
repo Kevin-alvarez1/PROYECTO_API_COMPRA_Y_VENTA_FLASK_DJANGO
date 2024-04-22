@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<config>
+    <clientes>
+
+        <cliente>
+            <NIT> 1111111-A </NIT>
+            <nombre> Bairon Alfredo </nombre>
+        </cliente>  
+        <cliente>
+            <NIT> 1234567-4 </NIT>
+            <nombre> Katerin Lopes </nombre>
+        </cliente> 
+        <cliente>
+            <NIT> 7654321-1 </NIT>
+            <nombre> Mario Gonzales </nombre>
+        </cliente>
+    
+    </clientes>
+    <bancos>
+
+        <banco>
+            <codigo> 113 </codigo>
+            <nombre> Banco Guatemalteco </nombre>
+        </banco> 
+        <banco>
+            <codigo> 2255 </codigo>
+            <nombre> Banco Filandes </nombre>
+        </banco>
+        <banco>
+            <codigo> 2213 </codigo>
+            <nombre> Banco Trebol</nombre>
+        </banco>
+
+    </bancos>
+</config>
