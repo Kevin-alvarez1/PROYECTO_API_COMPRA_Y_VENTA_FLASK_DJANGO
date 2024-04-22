@@ -125,18 +125,17 @@ def tabla_clientes(request):
     for factura_xml in root_transacciones.findall('.//factura'):
         fecha = factura_xml.find('fecha').text.strip()
         valor = factura_xml.find('valor').text.strip()
-        facturas.append({'fecha': fecha, 'valor': valor})
+        abono = factura_xml.find('Pago_Realizado').text.strip()
+        facturas.append({'fecha': fecha, 'valor': valor, 'abono': abono})
 
-    pagos = []
-    for pago_xml in root_transacciones.findall('.//pago'):
-        valor = pago_xml.find('valor').text.strip()
-        pagos.append({'valor': valor})
+    # Ordenar las facturas de la más reciente a la más antigua
+    facturas = sorted(facturas, key=lambda x: x['fecha'], reverse=True)
+
 
     # Enumerar las facturas y los pagos para sincronizarlos
     enumeradas_facturas = list(enumerate(facturas))
 
-
-    return render(request, 'Tabla_Clientes.html', {'clientes': clientes, 'enumeradas_facturas': enumeradas_facturas, 'pagos': pagos})
+    return render(request, 'Tabla_Clientes.html', {'clientes': clientes, 'enumeradas_facturas': enumeradas_facturas})
 
 def Seleccionar_Cliente(request):
     return render(request, 'Consultar_Ingresos.html')

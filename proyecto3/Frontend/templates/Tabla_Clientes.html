@@ -59,13 +59,7 @@
                     <tr>
                         <td>{{ factura.fecha }}</td>
                         <td>{{ factura.valor }}</td>
-                        <td>
-                            {% for pago in pagos %}
-                            {% if forloop.counter0 == index %}
-                            {{ pago.valor }}<br>
-                            {% endif %}
-                            {% endfor %}
-                        </td>
+                        <td>{{ factura.abono }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

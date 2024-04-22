@@ -18,11 +18,12 @@ class Banco:
         self.Codigo_Banco = Codigo_Banco
 
 class Factura:
-    def __init__(self, Numero_Factura, Nit_CLiente,Fecha_Factura,Valor_Factura):
+    def __init__(self, Numero_Factura, Nit_CLiente,Fecha_Factura,Valor_Factura, Pago_Realizado = 0.0):
         self.Numero_Factura = Numero_Factura
         self.Nit_Cliente = Nit_CLiente
         self.Fecha_Factura = Fecha_Factura
         self.Valor_Factura = Valor_Factura
+        self.Pago_Realizado = Pago_Realizado
 
 class Pago:
     def __init__(self, Codigo_Banco, Fecha_Pago, Nit_Cliente, Valor_Pago):
@@ -250,13 +251,17 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                 # Si no se encuentra ninguna fecha, asignar una cadena vacía
                 fecha_factura_texto = ''
 
+            # Crear objeto Factura y agregarlo a la lista
+            facturas.append(Factura(numero_factura, nit_cliente, fecha_factura_texto, valor_factura))
+
         # Obtener todos los pagos del archivo XML
         for pago_xml in root.findall('.//pago'):
             codigo_banco = pago_xml.find('codigoBanco').text.strip()
             fecha_pago = pago_xml.find('fecha').text.strip()
             nit_cliente = pago_xml.find('NITcliente').text.strip()
             valor_pago = pago_xml.find('valor').text.strip()
-
+            # Crear objeto Pago y agregarlo a la lista
+            pagos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
 
     nuevo_elemento = ET.fromstring(nuevo_contenido_transaccion)
 
@@ -274,6 +279,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         else:
             # Si no se encuentra ninguna fecha, asignar una cadena vacía
             fecha_factura_texto = ''
+        
         # Verificar si algún campo de la factura está vacío
         if not numero_factura or not nit_cliente or not fecha_factura_texto or not valor_factura:
             facturas_error += 1
@@ -281,15 +287,17 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             # Verificar si la factura ya existe dentro del mismo archivo
             if any(factura.Numero_Factura == numero_factura for factura in facturas_nuevas):
                 facturas_duplicadas += 1
-            elif any(Cliente.Nit_Cliente == nit_cliente for Cliente in clientes_Transac):
+            elif any(cliente.Nit_Cliente == nit_cliente for cliente in clientes_Transac):
                 # El NIT del cliente existe en la lista de clientes
-                facturas_nuevas.append(Factura(numero_factura, nit_cliente, fecha_factura_texto, valor_factura))
+                nueva_factura = Factura(numero_factura, nit_cliente, fecha_factura_texto, valor_factura)
+                facturas_nuevas.append(nueva_factura)
                 facturas_creadas += 1
-                facturas.append(Factura(numero_factura, nit_cliente, fecha_factura_texto, valor_factura))
+                facturas.append(nueva_factura)
+                # Asignar el valor de Valor_Pago a Pago_Realizado
+                nueva_factura.Pago_Realizado = float(valor_factura)
             else:
                 # El NIT del cliente no existe en la lista de clientes
                 facturas_error += 1
-
 
     for pago_xml in nuevo_elemento.findall('.//pago'):
         codigo_banco = pago_xml.find('codigoBanco').text.strip()
@@ -338,8 +346,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                         # El código del banco no existe en la lista de bancos
                         pagos_error += 1
 
-                        
-    guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error, fecha_extraida=extraer_fechas(nuevo_contenido_transaccion)))
+    # Aquí falta la definición de las funciones `extraer_fechas`, `guardar_respuesta_transaccion` y las clases `Factura` y `Pago`
 
     root = ET.Element('transacciones')
 
@@ -350,6 +357,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         ET.SubElement(factura_element, 'NITcliente').text = factura.Nit_Cliente
         ET.SubElement(factura_element, 'fecha').text = factura.Fecha_Factura
         ET.SubElement(factura_element, 'valor').text = factura.Valor_Factura
+        ET.SubElement(factura_element, 'Pago_Realizado').text = str(factura.Pago_Realizado)
 
     pagos_element = ET.SubElement(root, 'pagos')
     for pago in pagos_nuevos:
@@ -426,8 +434,6 @@ def reset_data():
     archivo_guardado4 = os.path.join(os.getcwd(), nombre_archivo4)
     if os.path.exists(archivo_guardado4):
         os.remove(archivo_guardado4)
-
-    
 
     return 'Datos reiniciados', 200
 
