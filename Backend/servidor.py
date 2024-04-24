@@ -354,19 +354,16 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
 
                             # Agregar pago creado a la lista de pagos
                             pagos.append(nuevo_pago)
+                        # Verificar si el código del banco existe en la lista de bancos
+                        if any(banco.Codigo_Banco == codigo_banco for banco in bancos_Transac):
+                            print("Banco encontrado")
+                        else:
+                            # El código del banco no existe en la lista de bancos
+                            pagos_error += 1
 
-                    else:
-                        # El código del banco no existe en la lista de bancos
-                        pagos_error += 1
+    guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error, fecha_extraida=extraer_fechas(nuevo_contenido_transaccion)))
 
 
-    # Aquí falta la definición de las funciones `extraer_fechas`, `guardar_respuesta_transaccion` y las clases `Factura` y `Pago`
-    for cliente in clientes_Transac:
-        if cliente.Nit_Cliente == nit_cliente_pago:
-            for cliente_xml in root.findall('.//cliente'):
-                if cliente_xml.find('NIT').text.strip() == nit_cliente_pago:
-                    cliente_xml.find('SaldoActual').text = str(cliente.Saldo_Actual)
-                    break
     root = ET.Element('transacciones')
 
     facturas_element = ET.SubElement(root, 'facturas')
@@ -459,6 +456,8 @@ def reset_data():
         os.remove(archivo_guardado4)
 
     return 'Datos reiniciados', 200
+
+
 
 if __name__ == '__main__':
     app.run(port=4700, debug=True)
