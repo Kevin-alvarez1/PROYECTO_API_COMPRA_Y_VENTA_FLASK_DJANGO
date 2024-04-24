@@ -18,7 +18,7 @@ class Banco:
         self.Codigo_Banco = Codigo_Banco
 
 class Factura:
-    def __init__(self, Numero_Factura, Nit_CLiente,Fecha_Factura,Valor_Factura, Pago_Realizado = 0.0):
+    def __init__(self, Numero_Factura, Nit_CLiente,Fecha_Factura,Valor_Factura = 0.0, Pago_Realizado = 0.0):
         self.Numero_Factura = Numero_Factura
         self.Nit_Cliente = Nit_CLiente
         self.Fecha_Factura = Fecha_Factura
@@ -26,7 +26,7 @@ class Factura:
         self.Pago_Realizado = Pago_Realizado
 
 class Pago:
-    def __init__(self, Codigo_Banco, Fecha_Pago, Nit_Cliente, Valor_Pago):
+    def __init__(self, Codigo_Banco, Fecha_Pago, Nit_Cliente, Valor_Pago= 0.0):
         self.Codigo_Banco = Codigo_Banco
         self.Fecha_Pago = Fecha_Pago
         self.Nit_Cliente = Nit_Cliente
@@ -294,7 +294,6 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                 facturas_creadas += 1
                 facturas.append(nueva_factura)
                 # Asignar el valor de Valor_Pago a Pago_Realizado
-                nueva_factura.Pago_Realizado = float(valor_factura)
             else:
                 # El NIT del cliente no existe en la lista de clientes
                 facturas_error += 1
@@ -302,7 +301,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
     for pago_xml in nuevo_elemento.findall('.//pago'):
         codigo_banco = pago_xml.find('codigoBanco').text.strip()
         fecha_pago_texto = pago_xml.find('fecha').text.strip()
-        nit_cliente = pago_xml.find('NITcliente').text.strip()
+        nit_cliente_pago = pago_xml.find('NITcliente').text.strip()
         valor_pago = pago_xml.find('valor').text.strip()
         # Extraer fechas del texto de la fecha de pago
         fechas_encontradas = extraer_fechas(fecha_pago_texto)
@@ -315,13 +314,13 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
             fecha_pago = ''
 
         # Verificar si algún campo del pago está vacío
-        if not codigo_banco or not fecha_pago or not nit_cliente or not valor_pago:
+        if not codigo_banco or not fecha_pago or not nit_cliente_pago or not valor_pago:
             pagos_error += 1
         else:
             # Verificar si el pago ya existe dentro del mismo archivo
             if any(pago.Codigo_Banco == codigo_banco and 
                     pago.Fecha_Pago == fecha_pago and 
-                    pago.Nit_Cliente == nit_cliente and 
+                    pago.Nit_Cliente == nit_cliente_pago and 
                     pago.Valor_Pago == valor_pago 
                     for pago in pagos_nuevos):
                 pagos_duplicados += 1
@@ -329,7 +328,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                 # Verificar si el pago ya existe en la base de datos
                 if any(pago.Codigo_Banco == codigo_banco and 
                         pago.Fecha_Pago == fecha_pago and 
-                        pago.Nit_Cliente == nit_cliente and 
+                        pago.Nit_Cliente == nit_cliente_pago and 
                         pago.Valor_Pago == valor_pago 
                         for pago in pagos):
                     pagos_duplicados += 1
@@ -337,17 +336,37 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                     # Verificar si el código del banco existe en la lista de bancos
                     if any(banco.Codigo_Banco == codigo_banco for banco in bancos_Transac):
                         # Crear nuevo pago
-                        pagos_nuevos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
+                        nuevo_pago = Pago(codigo_banco, fecha_pago, nit_cliente_pago, valor_pago)
+                        pagos_nuevos.append(nuevo_pago)
                         pagos_creados += 1
 
-                        # Agregar pago creado a la lista de pagos
-                        pagos.append(Pago(codigo_banco, fecha_pago, nit_cliente, valor_pago))
+                    # Asignar valor_pago a la factura correspondiente
+                    for factura in facturas:
+                        if factura.Nit_Cliente == nit_cliente_pago:
+                            factura.Pago_Realizado = float(valor_pago)
+                            # Calcular el saldo actual
+                            saldo_actual = float(factura.Pago_Realizado) - float(factura.Valor_Factura)
+                            # Actualizar el saldo actual del cliente correspondiente
+                            for cliente in clientes_Transac:
+                                if cliente.Nit_Cliente == nit_cliente_pago:
+                                    cliente.Saldo_Actual = saldo_actual
+                                    break
+
+                            # Agregar pago creado a la lista de pagos
+                            pagos.append(nuevo_pago)
+
                     else:
                         # El código del banco no existe en la lista de bancos
                         pagos_error += 1
 
-    # Aquí falta la definición de las funciones `extraer_fechas`, `guardar_respuesta_transaccion` y las clases `Factura` y `Pago`
 
+    # Aquí falta la definición de las funciones `extraer_fechas`, `guardar_respuesta_transaccion` y las clases `Factura` y `Pago`
+    for cliente in clientes_Transac:
+        if cliente.Nit_Cliente == nit_cliente_pago:
+            for cliente_xml in root.findall('.//cliente'):
+                if cliente_xml.find('NIT').text.strip() == nit_cliente_pago:
+                    cliente_xml.find('SaldoActual').text = str(cliente.Saldo_Actual)
+                    break
     root = ET.Element('transacciones')
 
     facturas_element = ET.SubElement(root, 'facturas')
@@ -358,7 +377,11 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         ET.SubElement(factura_element, 'fecha').text = factura.Fecha_Factura
         ET.SubElement(factura_element, 'valor').text = factura.Valor_Factura
         ET.SubElement(factura_element, 'Pago_Realizado').text = str(factura.Pago_Realizado)
-
+        # Buscar el cliente correspondiente para actualizar el saldo actual
+        for cliente in clientes_Transac:
+            if cliente.Nit_Cliente == factura.Nit_Cliente:
+                ET.SubElement(factura_element, 'SaldoActual').text = str(cliente.Saldo_Actual)
+                break
     pagos_element = ET.SubElement(root, 'pagos')
     for pago in pagos_nuevos:
         pago_element = ET.SubElement(pagos_element, 'pago')

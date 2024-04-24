@@ -126,11 +126,17 @@ def tabla_clientes(request):
         fecha = factura_xml.find('fecha').text.strip()
         valor = factura_xml.find('valor').text.strip()
         abono = factura_xml.find('Pago_Realizado').text.strip()
-        facturas.append({'fecha': fecha, 'valor': valor, 'abono': abono})
+        SaldoActual = factura_xml.find('SaldoActual').text.strip()
+        facturas.append({'fecha': fecha, 'valor': valor, 'abono': abono, 'SaldoActual': SaldoActual})
+
+        # Actualizar el saldo actual del cliente correspondiente en la lista de clientes
+        for cliente in clientes:
+            if cliente['nit'] == factura_xml.find('NITcliente').text.strip():
+                cliente['SaldoActual'] = SaldoActual
+                break
 
     # Ordenar las facturas de la más reciente a la más antigua
     facturas = sorted(facturas, key=lambda x: x['fecha'], reverse=True)
-
 
     # Enumerar las facturas y los pagos para sincronizarlos
     enumeradas_facturas = list(enumerate(facturas))
