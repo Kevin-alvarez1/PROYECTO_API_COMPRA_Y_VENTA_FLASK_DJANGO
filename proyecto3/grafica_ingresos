@@ -1,0 +1,16 @@
+digraph {
+	rankdir=TB size="8,5"
+	{
+		rank=same
+		113 [label="113
+$1500.50" fillcolor=lightblue fontcolor=black height=10.0 margin=0 orientation=270 pos=1 shape=box style=filled width=0.5]
+		223 [label="223
+$1200.00" fillcolor=lightblue fontcolor=black height=7.997334221926025 margin=0 orientation=270 pos=1 shape=box style=filled width=0.5]
+		2255 [label="2255
+$1200.00" fillcolor=lightblue fontcolor=black height=7.997334221926025 margin=0 orientation=270 pos=1 shape=box style=filled width=0.5]
+		11 [label="11
+$120.00" fillcolor=lightblue fontcolor=black height=0.7997334221926025 margin=0 orientation=270 pos=1 shape=box style=filled width=0.5]
+		2213 [label="2213
+$120.00" fillcolor=lightblue fontcolor=black height=0.7997334221926025 margin=0 orientation=270 pos=1 shape=box style=filled width=0.5]
+	}
+}

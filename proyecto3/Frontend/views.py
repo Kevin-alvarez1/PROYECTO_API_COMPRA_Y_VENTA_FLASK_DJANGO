@@ -4,7 +4,8 @@ import requests
 from django.views.decorators.csrf import csrf_exempt
 from xml.etree import ElementTree as ET
 from datetime import datetime, timedelta
-
+import graphviz
+import matplotlib.pyplot as plt
 def upload_to_flask(request):
     if request.method == 'POST':
         # Verificar si se envió un archivo
@@ -203,19 +204,26 @@ def Seleccionar_cliente(request):
         # Si la solicitud es GET, simplemente renderiza la página
         return render(request, 'Seleccionar_cliente.html')
 
+
+
 def Consultar_ingresos_Mes(request):
     if request.method == 'POST':
         mes = request.POST.get('mes')
         try:
             # Convertir el mes ingresado a un objeto datetime para comparación
             fecha_seleccionada = datetime.strptime(mes, '%m/%Y')
+            primer_mes = fecha_seleccionada.replace(day=1)  # Primer día del mes seleccionado
+            tercer_mes = primer_mes  # Tercer mes (el mes seleccionado)
+            segundo_mes = primer_mes.replace(month=primer_mes.month - 1)  # Segundo mes (el mes anterior)
+            primer_mes = primer_mes.replace(month=primer_mes.month - 2)  # Primer mes (dos meses antes)
 
             # Leer el archivo XML de transacciones
             tree_transacciones = ET.parse('C:/Users/Player/Desktop/Carpeta GitHub Poryecto 3 IPC2/Guardado_Transaccion.xml')
             root_transacciones = tree_transacciones.getroot()
 
             # Procesar los datos del archivo XML de transacciones
-            pagos = []
+            ingresos_por_banco = {}  # Diccionario para almacenar los ingresos por banco
+            max_valor = 0  # Inicializamos el valor máximo como 0
             for pago_xml in root_transacciones.findall('.//pago'):
                 fecha_pago_str = pago_xml.find('fecha').text.strip()
                 fecha_pago = datetime.strptime(fecha_pago_str, '%d/%m/%Y')
@@ -226,14 +234,53 @@ def Consultar_ingresos_Mes(request):
                     (fecha_pago.year == fecha_seleccionada.year and fecha_pago.month == fecha_seleccionada.month - 2):
                     
                     codigo_banco = pago_xml.find('codigoBanco').text.strip()
-                    fecha = fecha_pago.strftime('%d/%m/%Y')  # Convertir la fecha al formato dd/MM/yyyy
-                    valor = pago_xml.find('valor').text.strip()
-                    pagos.append({'codigo_banco': codigo_banco, 'fecha': fecha, 'valor': valor})
+                    valor = float(pago_xml.find('valor').text.strip())
 
-            # Ordenar los pagos de la más reciente a la más antigua
-            pagos = sorted(pagos, key=lambda x: x['fecha'], reverse=True)
+                    # Convertir el valor a miles
+                    valor_miles = valor / 1000
 
-            return render(request, 'Grafica_Ingresos.html', {'pagos': pagos})
+                    # Actualizamos el valor máximo si encontramos un nuevo máximo
+                    max_valor = max(max_valor, valor_miles)
+
+                    # Agregar el valor al total de ingresos del banco correspondiente
+                    ingresos_por_banco[codigo_banco] = ingresos_por_banco.get(codigo_banco, 0) + valor_miles
+                if (fecha_pago >= primer_mes and fecha_pago <= tercer_mes):
+                    
+                    codigo_banco = pago_xml.find('codigoBanco').text.strip()
+                    valor = float(pago_xml.find('valor').text.strip())
+
+                    # Convertir el valor a miles
+                    valor_miles = valor / 1000
+
+                    # Actualizamos el valor máximo si encontramos un nuevo máximo
+                    max_valor = max(max_valor, valor_miles)
+
+                    # Agregar el valor al total de ingresos del banco correspondiente
+                    ingresos_por_banco[codigo_banco] = ingresos_por_banco.get(codigo_banco, 0)
+
+            # Ordenar los ingresos por banco de mayor a menor
+            ingresos_por_banco = dict(sorted(ingresos_por_banco.items(), key=lambda item: item[1], reverse=True))
+
+            # Extraer los datos para las barras
+            bancos = list(ingresos_por_banco.keys())
+            ingresos = list(ingresos_por_banco.values())
+
+            # Generar la gráfica de barras
+            plt.bar(bancos, ingresos, color='lightblue')
+
+            # Añadir etiquetas y título
+            plt.xlabel('Código de Banco')
+            plt.ylabel('Ingresos (Miles de Q)')
+            plt.title(f'Ingresos por Banco\nde {primer_mes.strftime("%B/%Y")} - {tercer_mes.strftime("%B/%Y")}')
+
+            # Guardar la gráfica en un archivo PDF
+            plt.savefig('grafica_ingresos.pdf')
+
+            # Limpiar la gráfica actual
+            plt.clf()
+
+            return HttpResponse("Gráfica generada correctamente y guardada en 'grafica_ingresos.pdf'")
+
         except ValueError:
             # Si el formato del mes ingresado no es válido
             return render(request, 'Consultar_ingresos.html', {'error_message': 'Formato de mes inválido. Ingrese el mes en el formato dd/MM/yyyy.'})
