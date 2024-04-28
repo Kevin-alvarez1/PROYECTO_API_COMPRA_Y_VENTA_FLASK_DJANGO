@@ -234,7 +234,11 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
     if os.path.exists(archivo_guardado_transaccion):
         tree = ET.parse(archivo_guardado_transaccion)
         root = tree.getroot()
+    else:
+        root = ET.Element('transacciones')
 
+    if not os.path.exists(archivo_guardado_transaccion):
+        root = ET.Element('transacciones')
         # Obtener todas las facturas del archivo XML
         for factura_xml in root.findall('.//factura'):
             numero_factura = factura_xml.find('numeroFactura').text.strip()
@@ -298,6 +302,7 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                 # El NIT del cliente no existe en la lista de clientes
                 facturas_error += 1
 
+
     for pago_xml in nuevo_elemento.findall('.//pago'):
         codigo_banco = pago_xml.find('codigoBanco').text.strip()
         fecha_pago_texto = pago_xml.find('fecha').text.strip()
@@ -324,49 +329,36 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
                     pago.Valor_Pago == valor_pago 
                     for pago in pagos_nuevos):
                 pagos_duplicados += 1
+
             else:
-                # Verificar si el pago ya existe en la base de datos
-                if any(pago.Codigo_Banco == codigo_banco and 
-                        pago.Fecha_Pago == fecha_pago and 
-                        pago.Nit_Cliente == nit_cliente_pago and 
-                        pago.Valor_Pago == valor_pago 
-                        for pago in pagos):
-                    pagos_duplicados += 1
-                else:
+                # Verificar si el código del banco existe en la lista de bancos
+                if any(banco.Codigo_Banco == codigo_banco for banco in bancos_Transac):
+                    # Crear nuevo pago
+                    nuevo_pago = Pago(codigo_banco, fecha_pago, nit_cliente_pago, valor_pago)
+                    pagos_nuevos.append(nuevo_pago)
+                    pagos_creados += 1
+
+                # Asignar valor_pago a la factura correspondiente
+                for factura in facturas:
+                    if factura.Nit_Cliente == nit_cliente_pago:
+                        factura.Pago_Realizado = float(valor_pago)
+                        # Calcular el saldo actual
+                        saldo_actual = float(factura.Pago_Realizado) - float(factura.Valor_Factura)
+                        # Actualizar el saldo actual del cliente correspondiente
+                        for cliente in clientes_Transac:
+                            if cliente.Nit_Cliente == nit_cliente_pago:
+                                cliente.Saldo_Actual = saldo_actual
+                                break
+
+                        # Agregar pago creado a la lista de pagos
+                        pagos.append(nuevo_pago)
                     # Verificar si el código del banco existe en la lista de bancos
                     if any(banco.Codigo_Banco == codigo_banco for banco in bancos_Transac):
-                        # Crear nuevo pago
-                        nuevo_pago = Pago(codigo_banco, fecha_pago, nit_cliente_pago, valor_pago)
-                        pagos_nuevos.append(nuevo_pago)
-                        pagos_creados += 1
-
-                    # Asignar valor_pago a la factura correspondiente
-                    for factura in facturas:
-                        if factura.Nit_Cliente == nit_cliente_pago:
-                            factura.Pago_Realizado = float(valor_pago)
-                            # Calcular el saldo actual
-                            saldo_actual = float(factura.Pago_Realizado) - float(factura.Valor_Factura)
-                            # Actualizar el saldo actual del cliente correspondiente
-                            for cliente in clientes_Transac:
-                                if cliente.Nit_Cliente == nit_cliente_pago:
-                                    cliente.Saldo_Actual = saldo_actual
-                                    break
-
-                            # Agregar pago creado a la lista de pagos
-                            pagos.append(nuevo_pago)
-                        # Verificar si el código del banco existe en la lista de bancos
-                        if any(banco.Codigo_Banco == codigo_banco for banco in bancos_Transac):
-                            print("Banco encontrado")
-                        else:
-                            # El código del banco no existe en la lista de bancos
-                            pagos_error += 1
-
-    guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error, fecha_extraida=extraer_fechas(nuevo_contenido_transaccion)))
-
-
-    root = ET.Element('transacciones')
-
-    facturas_element = ET.SubElement(root, 'facturas')
+                        print("Banco encontrado")
+                    else:
+                        # El código del banco no existe en la lista de bancos
+                        pagos_error += 1
+        facturas_element = ET.SubElement(root, 'facturas')
     for factura in facturas_nuevas:
         factura_element = ET.SubElement(facturas_element, 'factura')
         ET.SubElement(factura_element, 'numeroFactura').text = factura.Numero_Factura
@@ -387,9 +379,11 @@ def actualizar_base_datos_transaccion(archivo_guardado_transaccion, nuevo_conten
         ET.SubElement(pago_element, 'NITcliente').text = pago.Nit_Cliente
         ET.SubElement(pago_element, 'valor').text = pago.Valor_Pago
 
+    guardar_respuesta_transaccion(RespuestaTranascion(facturas_creadas, facturas_duplicadas, facturas_error, pagos_creados, pagos_duplicados, pagos_error, fecha_extraida=extraer_fechas(nuevo_contenido_transaccion)))
+
+
     xml_str = xml.dom.minidom.parseString(ET.tostring(root)).toprettyxml(indent="    ")
     formatted_xml = remove_whitespace(xml_str)
-
     with open(archivo_guardado_transaccion, 'w') as file:
         file.write(formatted_xml)
 

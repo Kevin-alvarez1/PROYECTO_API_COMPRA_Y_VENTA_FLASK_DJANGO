@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<transacciones>
+    <facturas>
+
+        <factura>
+            <numeroFactura> 1234 </numeroFactura>
+            <NITcliente> 1111111-A </NITcliente>
+            <fecha> 30/03/2022 </fecha>
+            <valor> 1234 </valor>
+        </factura> 
+        <factura>
+            <numeroFactura> 213214213 </numeroFactura>
+            <NITcliente> 1234567-4 </NITcliente>
+            <fecha> Coban, Alta Verapaz, 12/4/2024 </fecha>
+            <valor> 1555 </valor>
+        </factura>
+        <factura>
+            <numeroFactura> 20123 </numeroFactura>
+            <NITcliente> 7654321-1 </NITcliente>
+            <fecha> Jutiapa, 12/1/2024 </fecha>
+            <valor> 200 </valor>
+        </factura>
+    </facturas>
+    <pagos>
+        <pago>
+            <codigoBanco> 2213 </codigoBanco>
+            <fecha> 02/03/2015 municipio de El quetzal </fecha>
+            <NITcliente> 1111111-A </NITcliente>
+            <valor> 120.0 </valor>
+        </pago> 
+    
+        <pago>
+            <codigoBanco> 113 </codigoBanco>
+            <fecha> 02/03/2015 </fecha>
+            <NITcliente> 1234567-4 </NITcliente>
+            <valor> 1500.5 </valor>
+        </pago>
+        <pago>
+            <codigoBanco> 2255 </codigoBanco>
+            <fecha> 1/01/2015 </fecha>
+            <NITcliente> 7654321-1 </NITcliente>
+            <valor> 1200 </valor>
+        </pago>
+    </pagos>
+</transacciones>

@@ -209,6 +209,7 @@ def Consultar_ingresos_Mes(request):
         try:
             # Convertir el mes ingresado a un objeto datetime para comparación
             fecha_seleccionada = datetime.strptime(mes, '%m/%Y')
+
             # Leer el archivo XML de transacciones
             tree_transacciones = ET.parse('C:/Users/Player/Desktop/Carpeta GitHub Poryecto 3 IPC2/Guardado_Transaccion.xml')
             root_transacciones = tree_transacciones.getroot()
@@ -218,8 +219,12 @@ def Consultar_ingresos_Mes(request):
             for pago_xml in root_transacciones.findall('.//pago'):
                 fecha_pago_str = pago_xml.find('fecha').text.strip()
                 fecha_pago = datetime.strptime(fecha_pago_str, '%d/%m/%Y')
-                # Verificar si el pago está dentro del rango de meses seleccionados
-                if fecha_pago.year == fecha_seleccionada.year and fecha_pago.month == fecha_seleccionada.month:
+                
+                # Verificar si el pago está dentro del rango de meses seleccionados o los dos meses anteriores
+                if (fecha_pago.year == fecha_seleccionada.year and fecha_pago.month == fecha_seleccionada.month) or \
+                    (fecha_pago.year == fecha_seleccionada.year and fecha_pago.month == fecha_seleccionada.month - 1) or \
+                    (fecha_pago.year == fecha_seleccionada.year and fecha_pago.month == fecha_seleccionada.month - 2):
+                    
                     codigo_banco = pago_xml.find('codigoBanco').text.strip()
                     fecha = fecha_pago.strftime('%d/%m/%Y')  # Convertir la fecha al formato dd/MM/yyyy
                     valor = pago_xml.find('valor').text.strip()

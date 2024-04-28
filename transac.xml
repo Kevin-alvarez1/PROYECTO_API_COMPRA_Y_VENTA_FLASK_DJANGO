@@ -14,7 +14,12 @@
             <fecha> Coban, Alta Verapaz, 12/12/2024 </fecha>
             <valor> 150.5 </valor>
         </factura>
-    
+        <factura>
+            <numeroFactura> 2012 </numeroFactura>
+            <NITcliente> 9212783-4 </NITcliente>
+            <fecha> Jutiapa, 12/20/2024 </fecha>
+            <valor> 200 </valor>
+        </factura>
     </facturas>
     <pagos>
         <pago>
@@ -26,10 +31,15 @@
     
         <pago>
             <codigoBanco> 22 </codigoBanco>
-            <fecha> 18/06/2023 </fecha>
+            <fecha> 18/02/2015 </fecha>
             <NITcliente> 1102783-1 </NITcliente>
             <valor> 1500.5 </valor>
         </pago>
-
+        <pago>
+            <codigoBanco> 223 </codigoBanco>
+            <fecha> 1/01/2015 </fecha>
+            <NITcliente> 9212783-4 </NITcliente>
+            <valor> 1200 </valor>
+        </pago>
     </pagos>
 </transacciones>
