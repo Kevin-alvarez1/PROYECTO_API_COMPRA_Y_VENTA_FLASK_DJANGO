@@ -16,10 +16,11 @@
         </factura>
         <factura>
             <numeroFactura> 2012 </numeroFactura>
-            <NITcliente> 9212783-4 </NITcliente>
+            <NITcliente> 2134-4 </NITcliente>
             <fecha> Jutiapa, 12/20/2024 </fecha>
             <valor> 200 </valor>
         </factura>
+
     </facturas>
     <pagos>
         <pago>
@@ -28,11 +29,16 @@
             <NITcliente> 9202783-A </NITcliente>
             <valor> 120.0 </valor>
         </pago> 
-    
         <pago>
-            <codigoBanco> 22 </codigoBanco>
+            <codigoBanco> 11 </codigoBanco>
+            <fecha> 02/03/2015 municipio de El quetzal </fecha>
+            <NITcliente> 9202783-A </NITcliente>
+            <valor> 120.0 </valor>
+        </pago> 
+        <pago>
+            <codigoBanco> 22222423424 </codigoBanco>
             <fecha> 18/02/2015 </fecha>
-            <NITcliente> 1102783-1 </NITcliente>
+            <NITcliente> 2134-1 </NITcliente>
             <valor> 1500.5 </valor>
         </pago>
         <pago>

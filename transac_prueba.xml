@@ -1,7 +1,6 @@
 <?xml version="1.0"?>
 <transacciones>
     <facturas>
-
         <factura>
             <numeroFactura> 1234 </numeroFactura>
             <NITcliente> 1111111-A </NITcliente>
@@ -28,7 +27,6 @@
             <NITcliente> 1111111-A </NITcliente>
             <valor> 120.0 </valor>
         </pago> 
-    
         <pago>
             <codigoBanco> 113 </codigoBanco>
             <fecha> 02/03/2015 </fecha>
