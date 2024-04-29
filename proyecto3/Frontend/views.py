@@ -6,6 +6,7 @@ from xml.etree import ElementTree as ET
 from datetime import datetime, timedelta
 import graphviz
 import matplotlib.pyplot as plt
+
 def upload_to_flask(request):
     if request.method == 'POST':
         # Verificar si se envió un archivo
@@ -105,6 +106,12 @@ def Ayuda(request):
 def Info_Estudiante(request):
     return render(request, 'Info_Estudiante.html')
 def Info_pagina(request):
+    if request.method == 'POST' and 'download_doc' in request.POST:
+        file_path = 'C:\\Users\\Player\\Desktop\\Carpeta GitHub Poryecto 3 IPC2\\IPC2_Proyecto3_202203038\\IPC2_Documentacion_202203038.pdf'
+        with open(file_path, 'rb') as pdf_file:
+            response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="IPC2_Documentacion_202203038.pdf"'
+            return response
     return render(request, 'Info_pagina.html')
 def tabla_clientes(request):
     # Leer el archivo XML de clientes
